@@ -7,7 +7,7 @@ import sys
 from pathlib import Path
 import argparse
 
-cfg_path = "config.json"
+cfg_path = os.path.expanduser("~/.cava-cfg-config.json")
 
 def getPaths():
     home_dir = input("whats your home directory (must be /home/yourname, starting with a / and not ending with a /)\n> ")
