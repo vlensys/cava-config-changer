@@ -1,71 +1,78 @@
-import subprocess
-import shutil
+#!/usr/bin/env python3
+
 import os
+import shutil
 import json
-import sys 
+import sys
+from pathlib import Path
+import argparse
 
-config_path = "config.json"
+cfg_path = "config.json"
 
-if not os.path.exists(config_path):
-    home_dir = input("home directory please! (be awear to not add a / at the end as it will break everything), the cava-config folder will be created there\n> ")
-    wallpaper_dir = input("where is your wallpapers folder? ex: /Pictures/Wallpapers (do NOT add a / at the end)\n> ")
-    rl_wallpaper = f"{home_dir}{wallpaper_dir}"
-    makedr = f"mkdir {home_dir}/cava-configs"
-    os.system(makedr)
-    wallpaper1_name = input("enter your first wallpaper's name (this MUST match the exact name of your wallpaper and the file extension, keep this in mind for all 3)\n> ")
-    wallpaper2_name = input("enter your second wallpaper's name\n> ")
-    wallpaper3_name = input("enter your third wallpaper's name\n> ")
-    mkdir1 = f"mkdir {home_dir}/cava-configs/{wallpaper1_name}"
-    mkdir2 = f"mkdir {home_dir}/cava-configs/{wallpaper2_name}"
-    mkdir3 = f"mkdir {home_dir}/cava-configs/{wallpaper3_name}"
-    os.system(mkdir1)
-    os.system(mkdir2)
-    os.system(mkdir3)
-
-    config = {"home_dir": home_dir,
-              "wallpaper1": wallpaper1_name,
-              "wallpaper2": wallpaper2_name,
-              "wallpaper3": wallpaper3_name,
-              "wallpaperdir": rl_wallpaper,
-              }
-    with open(config_path, "w") as f:
+def getPaths():
+    home_dir = input("whats your home directory (must be /home/yourname, starting with a / and not ending with a /)\n> ")
+    wallpaper_phrase = input("where does your wallpaper directory exist? (ex /Pictures/Wallpapers)\n> ")
+    wallpaper_dir = f"{home_dir}{wallpaper_phrase}"
+    print(wallpaper_dir)
+    config = {
+        "home_path": home_dir,
+        "wallpaper_path": wallpaper_dir,
+    }
+    with open(cfg_path, "w") as f:
         json.dump(config, f, indent=4)
-        print(f"done! now go add your config file to each of the folders created in {home_dir}/cava-configs")
-        sys.exit(1)
-with open(config_path, "r") as f:
+        print("cfg saved to the same place this script is in")
+
+if not Path(cfg_path).exists():
+    getPaths()
+
+with open(cfg_path) as f:
     config = json.load(f)
 
-home_dir = config["home_dir"]
-wallpaper1_name = config["wallpaper1"]
-wallpaper2_name = config["wallpaper2"]
-wallpaper3_name = config["wallpaper3"]
-wallpaperdir = config["wallpaperdir"]
+home_path = config["home_path"]
+wallpaper_path = config["wallpaper_path"]
 
-source_eva = f"{home_dir}/cava-configs/{wallpaper1_name}/config"
-source_yk = f"{home_dir}/cava-configs/{wallpaper2_name}/config"
-source_uhh = f"{home_dir}/cava-configs/{wallpaper3_name}/config"
-dest = f"{home_dir}/.config/cava/config"
+def getWalls(wallpaper_path):
+    files = os.listdir(wallpaper_path)
+    return files
 
-cava_path = f"{home_dir}/.config/cava/config"
-cmd = "caelestia wallpaper"
-output = subprocess.check_output(cmd, shell=True).decode().strip()
+def folderCreator(wallpaper_path):
+    files = [f for f in os.listdir(wallpaper_path) if os.path.isfile(os.path.join(wallpaper_path, f))]
+    base_folder = f"{home_path}/cava-configs"
+    os.makedirs(base_folder, exist_ok=True)
+    for file_name in files:
+        folder_path = os.path.join(base_folder, file_name)
+        config_path = os.path.join(folder_path, 'config')
+        if os.path.exists(config_path):
+            continue
+        os.makedirs(folder_path, exist_ok=True)
+        with open(config_path, 'w') as config_file:
+            config_file.write('# config!')
+        print(f"creating folder + cfg for {file_name} worked")
 
-if output == f"{wallpaperdir}/{wallpaper1_name}":
-    if os.path.exists(cava_path):
-        os.remove(cava_path)
-    shutil.copy(source_eva, dest)
-    print(f"changing cava's config to {wallpaper1_name}'s worked!")
+def Maincava():
+    current_wallpaper = os.popen("caelestia wallpaper").read().strip()
+    wallpaper_file = os.path.basename(current_wallpaper)
+    config_source = os.path.join(home_path, 'cava-configs', wallpaper_file, 'config')
+    config_target_dir = os.path.join(home_path, '.config', 'cava')
+    config_target_file = os.path.join(config_target_dir, 'config')
+    if not os.path.exists(config_source):
+        print(f"conig file not found for {wallpaper_file} (did u idk delete it?)")
+        return
+    if os.path.exists(config_target_file):
+        os.remove(config_target_file)
+    os.makedirs(config_target_dir, exist_ok=True)
+    shutil.copy(config_source, config_target_file)
+    print(f"{wallpaper_file} applied!")
 
-elif output == f"{wallpaperdir}/{wallpaper2_name}":
-    if os.path.exists(cava_path):
-        os.remove(cava_path)
-    shutil.copy(source_yk, dest)
-    print(f"changing cava's config to {wallpaper2_name}'s worked!")
+def main():
+    parser = argparse.ArgumentParser(description="wallpaper config manager")
+    parser.add_argument('-r', '--refresh', action='store_true', help='refresh and make folders')
+    args = parser.parse_args()
+    if args.refresh:
+        folderCreator(wallpaper_path)
+    else:
+        Maincava()
 
-elif output == f"{wallpaperdir}/{wallpaper3_name}":
-    if os.path.exists(cava_path):
-        os.remove(cava_path)
-    shutil.copy(source_uhh, dest)
-    print(f"changing cava's config to {wallpaper3_name}'s worked!")
+if __name__ == "__main__":
+    main()
 
-print("exiting...")
