@@ -4,7 +4,8 @@
 3. edit or replace the config file you want to use
 4. once done do python3 cava-cfg.py -r
 5. thats all!
-if you want to make it an executable however cd whever your file is installed then do chmod +x cava-cfg.py then move it to ur PATH with sudo mv cava-cfg.py /usr/local/bin/cava-cfg and youre done! just do cava-cfg and it'll apply
+   
+if you want to make it an executable (you should) however cd whever your file is installed then do chmod +x cava-cfg.py then move it to ur PATH with sudo mv cava-cfg.py /usr/local/bin/cava-cfg and youre done! just do cava-cfg and it'll apply
 
 Hii first python project for github kinda nervous
 
